@@ -1,20 +1,3 @@
-document.getElementById('user-input').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const userInput = document.getElementById('user-input').value.trim();
-        if (userInput) {
-            const nickname = localStorage.getItem('nickname');
-            const newMessageRef = ref(db, 'messages/' + Date.now());
-            set(newMessageRef, {
-                user: nickname,
-                text: userInput
-            });
-
-            document.getElementById('user-input').value = '';
-        }
-    }
-});
-
 function escapeHtml(text) {
     var element = document.createElement('div');
     if (text) {
