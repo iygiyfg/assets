@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+console.log('Firebase SDK loaded');
+
 const firebaseConfig = {
     apiKey: "AIzaSyDV9tQXgzqxUayhvc384tTLOwy0QOEZVcU",
     authDomain: "chat-e6c93.firebaseapp.com",
@@ -12,9 +14,12 @@ const firebaseConfig = {
     measurementId: "G-VY49LNJJLG"
 };
 
+console.log('Initializing Firebase');
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const chatRef = ref(db, 'triangulet/');
+
+console.log('Firebase initialized, waiting for messages...');
 
 function escapeHtml(text) {
     var element = document.createElement('div');
@@ -26,13 +31,14 @@ function escapeHtml(text) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded');
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
 
     const username = "User";
 
     function appendMessage(sender, text) {
-
+        console.log('Appending message:', text);
         const escapedText = escapeHtml(text);
 
         chatContainer.innerHTML += `
