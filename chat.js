@@ -1,14 +1,5 @@
-function escapeHtml(text) {
-    var element = document.createElement('div');
-    if (text) {
-        element.innerText = text;
-        element.textContent = text;
-    }
-    return element.innerHTML;
-}
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDV9tQXgzqxUayhvc384tTLOwy0QOEZVcU",
@@ -23,82 +14,63 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const chatRef = ref(db, 'messages/');
+const chatRef = ref(db, 'triangulet/');
 
-const storedNickname = localStorage.getItem('nickname');
-if (storedNickname) {
-    showRules(storedNickname);
-} else {
-    document.getElementById('nickname-button').addEventListener('click', function() {
-        const nickname = document.getElementById('nickname-input').value.trim();
-        if (nickname) {
-            localStorage.setItem('nickname', nickname);
-            showRules(nickname);
+function escapeHtml(text) {
+    var element = document.createElement('div');
+    if (text) {
+        element.innerText = text;
+        element.textContent = text;
+    }
+    return element.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+
+    const username = "User";
+
+    function appendMessage(sender, text) {
+
+        const escapedText = escapeHtml(text);
+
+        chatContainer.innerHTML += `
+            <div class="chat-message" style="display: flex; align-items: flex-start; margin-bottom: 15px; gap: 10px;">
+                <img src="https://i.ibb.co/5GBHSTB/Triangulet-Game-Logo.png" 
+                     alt="User Icon" 
+                     style="width: 50px; height: 50px; margin-right: 10px; border-radius: 0;">
+                <div style="display: flex; flex-direction: column;">
+                    <strong style="font-size: 1.2em; color: white; margin-bottom: 5px;">User</strong>
+                    <span style="color: white; font-size: 1em;">${escapedText}</span>
+                </div>
+            </div>`;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    onChildAdded(chatRef, (snapshot) => {
+        const message = snapshot.val();
+        appendMessage('User', message.text);  
+    });
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (text === '') return;
+
+        const newMessage = { text, username };
+
+        try {
+            await push(chatRef, newMessage);
+            userInput.value = ''; 
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    }
+
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
     });
-}
-
-function showRules(nickname) {
-    document.getElementById('nickname-container').style.display = 'none';
-    document.getElementById('rules-container').style.display = 'block';
-
-    document.getElementById('accept-button').addEventListener('click', function() {
-        document.getElementById('rules-container').style.display = 'none';
-        showChat(nickname);
-    });
-
-    document.getElementById('reject-button').addEventListener('click', function() {
-
-        localStorage.removeItem('nickname');
-        document.getElementById('nickname-container').style.display = 'block';
-        document.getElementById('rules-container').style.display = 'none';
-    });
-}
-
-function showChat(nickname) {
-    document.getElementById('chat-container').style.display = 'block';
-    document.getElementById('input-container').style.display = 'flex';
-    document.querySelector('.back-button').style.display = 'block';  
-
-    document.getElementById('chat-container').innerHTML = 
-        `<div class="message bot"><img src="https://voucan-us4.github.io/ai/logo.png" alt="Global Chat Logo">Hello, ${nickname}! Share your thoughts with the world.</div>`;
-
-    onChildAdded(chatRef, function(snapshot) {
-        const messageData = snapshot.val();
-        const newMessage = document.createElement('div');
-        newMessage.classList.add('message', messageData.user === nickname ? 'user' : 'bot');
-
-        const userAvatar = messageData.user === 'bot' ? 
-            '<img src="https://voucan-us4.github.io/ai/logo.png" alt="Bot Icon">' : 
-            '<img src="https://voucan-us4.github.io/ai/guest.png" alt="Guest Icon">';
-
-        const escapedText = escapeHtml(messageData.text);
-
-        newMessage.innerHTML = userAvatar + `<span class="nickname">${messageData.user}</span>${escapedText}`;
-
-        document.getElementById('chat-container').appendChild(newMessage);
-        document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
-    });
-
-    document.querySelector('.back-button').addEventListener('click', function() {
-        localStorage.removeItem('nickname'); 
-        document.getElementById('nickname-container').style.display = 'block';
-        document.getElementById('chat-container').style.display = 'none';
-        document.getElementById('input-container').style.display = 'none';
-        document.querySelector('.back-button').style.display = 'none';  
-    });
-}
-
-document.getElementById('send-button').addEventListener('click', function() {
-    const userInput = document.getElementById('user-input').value.trim();
-    if (userInput) {
-        const nickname = localStorage.getItem('nickname');
-        const newMessageRef = ref(db, 'messages/' + Date.now());
-        set(newMessageRef, {
-            user: nickname,
-            text: userInput
-        });
-
-        document.getElementById('user-input').value = '';
-    }
 });
